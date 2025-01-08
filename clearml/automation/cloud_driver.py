@@ -30,18 +30,10 @@ python -m pip install clearml-agent
 cat << EOF >> ~/clearml.conf
 {clearml_conf}
 EOF
-export CLEARML_API_HOST={api_server}
-export CLEARML_WEB_HOST={web_server}
-export CLEARML_FILES_HOST={files_server}
-export DYNAMIC_INSTANCE_ID=$({instance_id_command})
-export CLEARML_WORKER_ID={worker_prefix}:$DYNAMIC_INSTANCE_ID
-export CLEARML_API_ACCESS_KEY='{access_key}'
-export CLEARML_API_SECRET_KEY='{secret_key}'
-export CLEARML_AUTH_TOKEN='{auth_token}'
 source ~/.bashrc
 {bash_script}
 {driver_extra}
-python -m clearml_agent --config-file ~/clearml.conf daemon --queue '{queue}' {docker}
+python3 -m clearml_agent --config-file ~/clearml.conf daemon --queue '{queue}' {docker}
 
 if [[ $? -ne 0 ]]
 then
