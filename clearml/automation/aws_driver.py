@@ -8,6 +8,8 @@ from ..utilities.pyhocon import ConfigFactory, ConfigTree
 from .auto_scaler import CloudDriver
 from .cloud_driver import parse_tags
 
+from pprint import pprint
+
 try:
     # noinspection PyPackageRequirements
     import boto3
@@ -62,29 +64,36 @@ class AWSDriver(CloudDriver):
                 "ImageId": resource_conf["ami_id"],
                 "Monitoring": {'Enabled': bool(resource_conf.get('enable_monitoring', False))},
                 "InstanceType": resource_conf["instance_type"],
+                "BlockDeviceMappings": resource_conf.get("ebs_volumes")
             }
         )
         # handle EBS volumes (existing or new)
         # Ref: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
-        if resource_conf.get("ebs_snapshot_id") and resource_conf.get("ebs_device_name"):
-            launch_specification["BlockDeviceMappings"] = [
-                {
-                    "DeviceName": resource_conf["ebs_device_name"],
-                    "Ebs": {
-                        "SnapshotId": resource_conf["ebs_snapshot_id"]
-                    }
-                }
-            ]
-        elif resource_conf.get("ebs_device_name"):
-            launch_specification["BlockDeviceMappings"] = [
-                {
-                    "DeviceName": resource_conf["ebs_device_name"],
-                    "Ebs": {
-                        "VolumeSize": resource_conf.get("ebs_volume_size", 80),
-                        "VolumeType": resource_conf.get("ebs_volume_type", "gp3")
-                    }
-                }
-            ]
+        # if resource_conf.get("ebs_volumes"):
+        #     for vol in resource_conf.get("ebs_volumes"):
+        #         if vol.get("ebs_device_name"):
+        #             print(vol.get("ebs_device_name"))
+        #             print(vol.get("ebs_snapshot_id", None))
+        #             print(vol.get("ebs_volume_size", 100))
+        #             print(vol.get("ebs_volume_type", "gp3"))
+        #             print(vol.get("ebs_kms_key_id", None))
+        #             print(vol.get("ebs_iops", 3000))
+        #             print(vol.get("ebs_delete_on_termination", True))
+        #
+        #             launch_specification["BlockDeviceMappings"].append(
+        #                 {
+        #                     "DeviceName": vol.get("ebs_device_name"),
+        #                     "Ebs": {
+        #                         "SnapshotId": vol.get("ebs_snapshot_id", None),
+        #                         "VolumeSize": vol.get("ebs_volume_size", 100),
+        #                         "VolumeType": vol.get("ebs_volume_type", "gp3"),
+        #                         "KmsKeyId": vol.get("ebs_kms_key_id", None),
+        #                         "Encrypted": vol.get("ebs_encrypted", False),
+        #                         "Iops": vol.get("ebs_iops", 3000),
+        #                         "DeleteOnTermination": vol.get("ebs_delete_on_termination", True)
+        #                     }
+        #                 }
+        #             )
 
         if resource_conf.get("subnet_id", None):
             launch_specification["SubnetId"] = resource_conf["subnet_id"]
@@ -144,6 +153,7 @@ class AWSDriver(CloudDriver):
                 launch_specification, resource_conf.get("extra_configurations", {})
             )
 
+            pprint(launch_specification)
             instances = ec2.run_instances(**launch_specification)
 
             # Get the instance object for later use
