@@ -8,6 +8,8 @@ from ..utilities.pyhocon import ConfigFactory, ConfigTree
 from .auto_scaler import CloudDriver
 from .cloud_driver import parse_tags
 
+from pprint import pprint
+
 try:
     # noinspection PyPackageRequirements
     import boto3
@@ -62,6 +64,7 @@ class AWSDriver(CloudDriver):
                 "ImageId": resource_conf["ami_id"],
                 "Monitoring": {"Enabled": bool(resource_conf.get("enable_monitoring", False))},
                 "InstanceType": resource_conf["instance_type"],
+                "BlockDeviceMappings": resource_conf.get("ebs_volumes")
             }
         )
         # handle EBS volumes (existing or new)
@@ -128,6 +131,7 @@ class AWSDriver(CloudDriver):
             )
             ConfigTree.merge_configs(launch_specification, resource_conf.get("extra_configurations", {}))
 
+            pprint(launch_specification)
             instances = ec2.run_instances(**launch_specification)
 
             # Get the instance object for later use
